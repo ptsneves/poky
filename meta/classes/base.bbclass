@@ -488,7 +488,7 @@ python () {
     need_machine = d.getVar('COMPATIBLE_MACHINE')
     if need_machine:
         import re
-        compat_machines = (d.getVar('MACHINEOVERRIDES') or "").split(":")
+        compat_machines = (d.getVar('MACHINEOVERRIDES') or d.getVar('MACHINE')).split(":")
         for m in compat_machines:
             if re.match(need_machine, m):
                 break
