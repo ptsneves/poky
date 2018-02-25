@@ -314,7 +314,7 @@ class Partition():
             size_str = "-F 16" # FAT 16
 
         dosfs_cmd = "mkdosfs %s -S 512 %s -C %s %d" % (label_str, size_str,
-                                                       rootfs, rootfs_size)
+                                                       rootfs, max(8250,rootfs_size))
         exec_native_cmd(dosfs_cmd, native_sysroot)
 
         mcopy_cmd = "mcopy -i %s -s %s/* ::/" % (rootfs, rootfs_dir)
