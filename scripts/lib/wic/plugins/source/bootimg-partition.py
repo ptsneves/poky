@@ -120,4 +120,4 @@ class BootimgPartitionPlugin(SourcePlugin):
 
         logger.debug('Prepare boot partition using rootfs in %s', hdddir)
         part.prepare_rootfs(cr_workdir, oe_builddir, hdddir,
-                            native_sysroot)
+                            native_sysroot, False)
