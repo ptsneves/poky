@@ -33,7 +33,7 @@ from oe.path import copyhardlinktree
 
 from wic import WicError
 from wic.pluginbase import SourcePlugin
-from wic.misc import get_bitbake_var
+from wic.utils.misc import get_bitbake_var, exec_cmd
 
 logger = logging.getLogger('wic')
 

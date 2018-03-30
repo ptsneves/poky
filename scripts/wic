@@ -129,7 +129,7 @@ def wic_create_subcommand(args, usage_str):
     parser.add_option("-s", "--skip-build-check", dest="build_check",
                       action="store_false", default=True, help="skip the build check")
     parser.add_option("-f", "--build-rootfs", action="store_true", help="build rootfs")
-    parser.add_option("-c", "--compress-with", choices=("gzip", "bzip2", "xz"),
+    parser.add_option("-c", "--compress-with", choices=("gzip", "bzip2", "xz", "zip"),
                       dest='compressor',
                       help="compress image with specified compressor")
     parser.add_option("-m", "--bmap", action="store_true", help="generate .bmap")

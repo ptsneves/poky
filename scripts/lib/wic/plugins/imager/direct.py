@@ -210,7 +210,10 @@ class DirectPlugin(ImagerPlugin):
         # Compress the image
         if self.compressor:
             logger.debug("Compressing disk %s with %s", disk_name, self.compressor)
-            exec_cmd("%s %s" % (self.compressor, full_path))
+            if self.compressor == "zip":
+              exec_cmd("%s -j %s %s" % (self.compressor, full_path + ".zip", full_path))
+            else:
+              exec_cmd("%s %s" % (self.compressor, full_path))
 
     def print_info(self):
         """
@@ -221,6 +224,7 @@ class DirectPlugin(ImagerPlugin):
         extension = "direct" + {"gzip": ".gz",
                                 "bzip2": ".bz2",
                                 "xz": ".xz",
+                                "zip" : ".zip",
                                 None: ""}.get(self.compressor)
         full_path = self._full_path(self.outdir, self.parts[0].disk, extension)
         msg += '  %s\n\n' % full_path

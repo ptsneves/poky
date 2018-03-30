@@ -20,7 +20,11 @@ def wks_search(files, search_path):
             if searched:
                 return searched
 
-WIC_CREATE_EXTRA_ARGS ?= ""
+WIC_COMPRESSION ?= ""
+
+IMAGE_DEPENDS_wic_append = "${@bb.utils.contains_any("WIC_COMPRESSION", "zip", " zip-native:do_populate_sysroot", "", d)}"
+
+WIC_CREATE_EXTRA_ARGS += "${@bb.utils.contains_any("WIC_COMPRESSION", "bzip2 gzip xz zip", "--compress-with=${WIC_COMPRESSION}" , "", d)}"
 
 IMAGE_CMD_wic () {
 	out="${IMGDEPLOYDIR}/${IMAGE_NAME}"
@@ -31,6 +35,10 @@ IMAGE_CMD_wic () {
 
 	BUILDDIR="${TOPDIR}" wic create "$wks" --vars "${STAGING_DIR}/${MACHINE}/imgdata/" -e "${IMAGE_BASENAME}" -o "$out/" ${WIC_CREATE_EXTRA_ARGS}
 	mv "$out/$(basename "${wks%.wks}")"*.direct "$out${IMAGE_NAME_SUFFIX}.wic"
+
+	if [ -n "${WIC_COMPRESSION}" ]; then
+		mv "$out/$(basename "${wks%.wks}")"*.direct.${WIC_COMPRESSION} "$out${IMAGE_NAME_SUFFIX}.wic.${WIC_COMPRESSION}"
+	fi
 	rm -rf "$out/"
 }
 IMAGE_CMD_wic[vardepsexclude] = "WKS_FULL_PATH WKS_FILES TOPDIR"
