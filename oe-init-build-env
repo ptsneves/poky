@@ -30,7 +30,9 @@ if [ -n "$BASH_SOURCE" ]; then
 elif [ -n "$ZSH_NAME" ]; then
     THIS_SCRIPT=$0
 else
-    THIS_SCRIPT="$(pwd)/oe-init-build-env"
+    #Append the / preffix because lsof should always return absolute path
+    THIS_SCRIPT="/$(lsof -p $$ -Fn0 | tail -1| cut -d '/' -f 2-)"
+    echo $THIS_SCRIPT
 fi
 if [ -n "$BBSERVER" ]; then
     unset BBSERVER
