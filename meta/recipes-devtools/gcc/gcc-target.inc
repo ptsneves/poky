@@ -198,6 +198,13 @@ do_install () {
 	chown -R root:root ${D}
 }
 
+do_install_append_class-nativesdk() {
+	cd ${D}${bindir}
+  create_cmdline_wrapper ${TARGET_PREFIX}gcc -L "\$realdir"/../../usr/lib -L "\$realdir"/../../lib -isystem "\$realdir"/../../usr/include -pthread -ldl -lm
+  create_cmdline_wrapper ${TARGET_PREFIX}g++ -L "\$realdir"/../../usr/lib -L "\$realdir"/../../lib -isystem "\$realdir"/../../usr/include/c++/${PV} -isystem "\$realdir"/../../usr/include/${BINV}/c++/${TARGET_SYS} -isystem "\$realdir"/../../usr/include -pthread -ldl
+  cd -
+}
+
 do_install_append () {
         #
         # Thefixinc.sh script, run on the gcc's compile phase, looks into sysroot header
