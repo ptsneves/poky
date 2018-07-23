@@ -6,14 +6,50 @@ LICENSE = "MIT"
 TOOLCHAIN_TARGET_TASK ?= ""
 
 TOOLCHAIN_HOST_TASK ?= "\
-    nativesdk-python3-core \
-    nativesdk-python3-modules \
-    nativesdk-python3-misc \
-    nativesdk-python3-git \
+    nativesdk-python \
+    nativesdk-python-core \
+    nativesdk-python-modules \
+    nativesdk-python-misc \
+    nativesdk-python-git \
+    nativesdk-python-pysqlite \
     nativesdk-ncurses-terminfo-base \
     nativesdk-chrpath \
+    nativesdk-gcc \
+    nativesdk-bzip2 \
+    nativesdk-bzip2-dev \
+    nativesdk-gcc-symlinks \
+    nativesdk-g++ \
+    nativesdk-g++-symlinks \
+    nativesdk-cpp\
+    nativesdk-cpp-symlinks \
+    nativesdk-coreutils \
+    nativesdk-sed \
+    nativesdk-flex \
+    nativesdk-cpio \
+    nativesdk-patch \
+    nativesdk-quilt \
+    nativesdk-which \
+    nativesdk-binutils \
+    nativesdk-binutils-symlinks \
+    nativesdk-diffutils \
+    nativesdk-gzip \
+    nativesdk-gawk \
+    nativesdk-file \
+    nativesdk-diffstat \
+    nativesdk-perl \
+    nativesdk-libtool \
+    nativesdk-libstdc++ \
+    nativesdk-autoconf \
+    nativesdk-automake \
+    nativesdk-libstdc++-dev \
+    nativesdk-glibc \
+    nativesdk-glibc-dev \
+    nativesdk-perl-modules \
+    nativesdk-bash \
+    nativesdk-util-linux \
+    nativesdk-grep \
+    nativesdk-chrpath \
     nativesdk-tar \
-    nativesdk-buildtools-perl-dummy \
     nativesdk-git \
     nativesdk-git-perltools \
     nativesdk-pigz \

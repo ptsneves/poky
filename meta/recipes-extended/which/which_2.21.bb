@@ -33,3 +33,4 @@ ALTERNATIVE_PRIORITY = "100"
 
 ALTERNATIVE_${PN}-doc = "which.1"
 ALTERNATIVE_LINK_NAME[which.1] = "${mandir}/man1/which.1"
+BBCLASSEXTEND = "native nativesdk"

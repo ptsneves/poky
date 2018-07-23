@@ -37,7 +37,7 @@ S = "${WORKDIR}/uuid-${PV}"
 inherit autotools update-alternatives
 
 EXTRA_OECONF = "--without-dce --without-cxx --without-perl --without-perl-compat --without-php --without-pgsql"
-EXTRA_OECONF = "--includedir=${includedir}/ossp"
+EXTRA_OECONF += "--includedir=${includedir}/ossp"
 EXTRA_OEMAKE_class-target = "LIBTOOLFLAGS='--tag=CC'"
 
 do_configure_prepend() {
