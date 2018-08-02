@@ -70,7 +70,7 @@ DEFAULT_TEST_SUITES_remove_qemumips64 = "${MIPSREMOVE}"
 TEST_SUITES ?= "${DEFAULT_TEST_SUITES}"
 
 TEST_QEMUBOOT_TIMEOUT ?= "1000"
-TEST_TARGET ?= "qemu"
+TEST_TARGET ?= "OEQemuTarget"
 
 TESTIMAGEDEPENDS = ""
 TESTIMAGEDEPENDS_qemuall = "qemu-native:do_populate_sysroot qemu-helper-native:do_populate_sysroot qemu-helper-native:do_addto_recipe_sysroot"
@@ -142,7 +142,6 @@ def testimage_main(d):
     from oeqa.core.utils.misc import updateTestData
     from oeqa.runtime.context import OERuntimeTestContext
     from oeqa.runtime.context import OERuntimeTestContextExecutor
-    from oeqa.core.target.qemu import supported_fstypes
     from oeqa.core.utils.test import getSuiteCases
     from oeqa.utils import make_logger_bitbake_compatible
 
@@ -184,15 +183,6 @@ def testimage_main(d):
     # Get machine
     machine = d.getVar("MACHINE")
 
-    # Get rootfs
-    fstypes = [fs for fs in d.getVar('IMAGE_FSTYPES').split(' ')
-                  if fs in supported_fstypes]
-    if not fstypes:
-        bb.fatal('Unsupported image type built. Add a comptible image to '
-                 'IMAGE_FSTYPES. Supported types: %s' %
-                 ', '.join(supported_fstypes))
-    rootfs = '%s.%s' % (image_name, fstypes[0])
-
     # Get tmpdir (not really used, just for compatibility)
     tmpdir = d.getVar("TMPDIR")
 
@@ -225,7 +215,6 @@ def testimage_main(d):
     # TODO: We use the current implementatin of qemu runner because of
     # time constrains, qemu runner really needs a refactor too.
     target_kwargs = { 'machine'     : machine,
-                      'rootfs'      : rootfs,
                       'tmpdir'      : tmpdir,
                       'dir_image'   : dir_image,
                       'display'     : display,
@@ -248,9 +237,7 @@ def testimage_main(d):
         d.getVar("TESTIMAGE_DUMP_DIR"))
 
     # the robot dance
-    target = OERuntimeTestContextExecutor.getTarget(
-        d.getVar("TEST_TARGET"), logger, d.getVar("TEST_TARGET_IP"),
-        d.getVar("TEST_SERVER_IP"), **target_kwargs)
+    target = OERuntimeTestContextExecutor.getTarget(d.getVar("TEST_TARGET"), td, logger, **target_kwargs)
 
     # test context
     tc = OERuntimeTestContext(td, logger, target, host_dumper,
@@ -277,6 +264,7 @@ def testimage_main(d):
         # Add systemd.log_level=debug to enable systemd debug logging
         bootparams = 'systemd.log_target=console'
 
+    tc.target.deploy()
     results = None
     orig_sigterm_handler = signal.signal(signal.SIGTERM, sigterm_exception)
     try:

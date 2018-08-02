@@ -36,10 +36,10 @@ class BeagleBoneTarget(MasterImageHardwareTarget):
     def get_extra_files(self):
         return list(self.dtbs.keys())
 
-    def __init__(self, d):
-        super(BeagleBoneTarget, self).__init__(d)
+    def __init__(self, td, logger, **kwargs):
+        super(BeagleBoneTarget, self).__init__(td, logger, **kwargs)
 
-        self.image_fstype = self.get_image_fstype(d)
+        self.image_fstype = self.get_image_fstype(td)
         self.deploy_cmds = [
                 'mkdir -p /mnt/testrootfs',
                 'mount -L testrootfs /mnt/testrootfs',

@@ -24,8 +24,8 @@ from oeqa.controllers.masterimage import MasterImageHardwareTarget
 
 class GrubTarget(MasterImageHardwareTarget):
 
-    def __init__(self, d):
-        super(GrubTarget, self).__init__(d)
+    def __init__(self, td, logger, **kwargs):
+        super(GrubTarget, self).__init__(td, logger, **kwargs)
         self.deploy_cmds = [
                 'mount -L boot /boot',
                 'mkdir -p /mnt/testrootfs',
