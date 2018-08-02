@@ -21,6 +21,10 @@ class OETarget(object):
         pass
 
     @abstractmethod
+    def deploy(self):
+        pass
+
+    @abstractmethod
     def copyTo(self, localSrc, remoteDst):
         pass
 

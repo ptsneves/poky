@@ -8,10 +8,10 @@ import logging
 import subprocess
 import codecs
 
-from . import OETarget
+from oeqa.core.target import OETarget
 
 class OESSHTarget(OETarget):
-    def __init__(self, logger, ip, server_ip, timeout=300, user='root',
+    def __init__(self, td, logger, timeout=300, user='root',
                  port=None, **kwargs):
         if not logger:
             logger = logging.getLogger('target')
@@ -25,8 +25,9 @@ class OESSHTarget(OETarget):
             logger.addHandler(fileHandler)
 
         super(OESSHTarget, self).__init__(logger)
-        self.ip = ip
-        self.server_ip = server_ip
+        self.ip = td['TEST_TARGET_IP']
+        self.server_ip = td['TEST_SERVER_IP']
+
         self.timeout = timeout
         self.user = user
         ssh_options = [

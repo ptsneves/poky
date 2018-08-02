@@ -4,8 +4,6 @@
 import os
 
 from oeqa.core.context import OETestContext, OETestContextExecutor
-from oeqa.core.target.ssh import OESSHTarget
-from oeqa.core.target.qemu import OEQemuTarget
 from oeqa.utils.dump import HostDumper
 
 from oeqa.runtime.loader import OERuntimeTestLoader
@@ -49,6 +47,7 @@ class OERuntimeTestContextExecutor(OETestContextExecutor):
     default_manifest = 'data/manifest'
     default_server_ip = '192.168.7.1'
     default_target_ip = '192.168.7.2'
+    default_host_dumper_dir = '/tmp/oe-saved-tests'
     default_extract_dir = 'packages/extracted'
 
     def register_commands(self, logger, subparsers):
@@ -70,7 +69,9 @@ class OERuntimeTestContextExecutor(OETestContextExecutor):
                 % self.default_server_ip)
 
         runtime_group.add_argument('--host-dumper-dir', action='store',
-                help="Directory where host status is dumped, if tests fails")
+                default=self.default_host_dumper_dir,
+                help="Directory where host status is dumped, if tests fails, default: %s" \
+                % self.default_host_dumper_dir)
 
         runtime_group.add_argument('--packages-manifest', action='store',
                 default=self.default_manifest,
@@ -86,32 +87,12 @@ class OERuntimeTestContextExecutor(OETestContextExecutor):
                 help="Qemu boot configuration, only needed when target_type is QEMU.")
 
     @staticmethod
-    def getTarget(target_type, logger, target_ip, server_ip, **kwargs):
+    def getTarget(target_type, td, logger, **kwargs):
         target = None
 
-        if target_ip:
-            target_ip_port = target_ip.split(':')
-            if len(target_ip_port) == 2:
-                target_ip = target_ip_port[0]
-                kwargs['port'] = target_ip_port[1]
-
-        if target_type == 'simpleremote':
-            target = OESSHTarget(logger, target_ip, server_ip, **kwargs)
-        elif target_type == 'qemu':
-            target = OEQemuTarget(logger, server_ip, **kwargs)
-        else:
-            # XXX: This code uses the old naming convention for controllers and
-            # targets, the idea it is to leave just targets as the controller
-            # most of the time was just a wrapper.
-            # XXX: This code tries to import modules from lib/oeqa/controllers
-            # directory and treat them as controllers, it will less error prone
-            # to use introspection to load such modules.
-            # XXX: Don't base your targets on this code it will be refactored
-            # in the near future.
-            # Custom target module loading
-            target_modules_path = kwargs.get('target_modules_path', '')
-            controller = OERuntimeTestContextExecutor.getControllerModule(target_type, target_modules_path)
-            target = controller(logger, target_ip, server_ip, **kwargs)
+        target_modules_path = kwargs.get('target_modules_path', '')
+        controller = OERuntimeTestContextExecutor.getControllerModule(target_type, target_modules_path)
+        target = controller(td, logger, **kwargs)
 
         return target
 
@@ -173,7 +154,7 @@ class OERuntimeTestContextExecutor(OETestContextExecutor):
         try:
             obj = getattr(module, target)
         except:
-            obj = None
+            pass
         return obj
         
     @staticmethod

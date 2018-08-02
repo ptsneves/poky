@@ -28,18 +28,18 @@ class MasterImageHardwareTarget(oeqa.targetcontrol.BaseTarget, metaclass=ABCMeta
 
     supported_image_fstypes = ['tar.gz', 'tar.bz2']
 
-    def __init__(self, d):
-        super(MasterImageHardwareTarget, self).__init__(d)
+    def __init__(self, td, logger, **kwargs):
+        super(MasterImageHardwareTarget, self).__init__(td, logger, **kwargs)
 
         # target ip
-        addr = d.getVar("TEST_TARGET_IP") or bb.fatal('Please set TEST_TARGET_IP with the IP address of the machine you want to run the tests on.')
+        addr = td['TEST_TARGET_IP'] or bb.fatal('Please set TEST_TARGET_IP with the IP address of the machine you want to run the tests on.')
         self.ip = addr.split(":")[0]
         try:
             self.port = addr.split(":")[1]
         except IndexError:
             self.port = None
         bb.note("Target IP: %s" % self.ip)
-        self.server_ip = d.getVar("TEST_SERVER_IP")
+        self.server_ip = td['TEST_SERVER_IP']
         if not self.server_ip:
             try:
                 self.server_ip = subprocess.check_output(['ip', 'route', 'get', self.ip ]).split("\n")[0].split()[-1]
@@ -48,50 +48,47 @@ class MasterImageHardwareTarget(oeqa.targetcontrol.BaseTarget, metaclass=ABCMeta
         bb.note("Server IP: %s" % self.server_ip)
 
         # test rootfs + kernel
-        self.image_fstype = self.get_image_fstype(d)
-        self.rootfs = os.path.join(d.getVar("DEPLOY_DIR_IMAGE"), d.getVar("IMAGE_LINK_NAME") + '.' + self.image_fstype)
-        self.kernel = os.path.join(d.getVar("DEPLOY_DIR_IMAGE"), d.getVar("KERNEL_IMAGETYPE", False) + '-' + d.getVar('MACHINE', False) + '.bin')
+        self.image_fstype = self.get_image_fstype(td)
+        self.rootfs = os.path.join(td['DEPLOY_DIR_IMAGE'], td['IMAGE_LINK_NAME'] + '.' + self.image_fstype)
+        self.kernel = os.path.join(td['DEPLOY_DIR_IMAGE'], td["KERNEL_IMAGETYPE"] + '-' + td['MACHINE'] + '.bin')
         if not os.path.isfile(self.rootfs):
             # we could've checked that IMAGE_FSTYPES contains tar.gz but the config for running testimage might not be
             # the same as the config with which the image was build, ie
             # you bitbake core-image-sato with IMAGE_FSTYPES += "tar.gz"
             # and your autobuilder overwrites the config, adds the test bits and runs bitbake core-image-sato -c testimage
-            bb.fatal("No rootfs found. Did you build the image ?\nIf yes, did you build it with IMAGE_FSTYPES += \"tar.gz\" ? \
-                      \nExpected path: %s" % self.rootfs)
+            bb.fatal("No rootfs found. Did you build the image ?\n"  \
+              "If yes, did you build it with IMAGE_FSTYPES += \"{}\" ?"  \
+              "\nExpected path: {}".format(" ".join(self.supported_image_fstypes), self.rootfs))
         if not os.path.isfile(self.kernel):
             bb.fatal("No kernel found. Expected path: %s" % self.kernel)
 
         # master ssh connection
         self.master = None
+
         # if the user knows what they are doing, then by all means...
-        self.user_cmds = d.getVar("TEST_DEPLOY_CMDS")
+        self.user_cmds = td['TEST_DEPLOY_CMDS'] if 'TEST_DEPLOY_CMDS' in td else None
         self.deploy_cmds = None
 
-        # this is the name of the command that controls the power for a board
-        # e.g: TEST_POWERCONTROL_CMD = "/home/user/myscripts/powercontrol.py ${MACHINE} what-ever-other-args-the-script-wants"
-        # the command should take as the last argument "off" and "on" and "cycle" (off, on)
-        self.powercontrol_cmd = d.getVar("TEST_POWERCONTROL_CMD") or None
-        self.powercontrol_args = d.getVar("TEST_POWERCONTROL_EXTRA_ARGS", False) or ""
-
-        self.serialcontrol_cmd = d.getVar("TEST_SERIALCONTROL_CMD") or None
-        self.serialcontrol_args = d.getVar("TEST_SERIALCONTROL_EXTRA_ARGS", False) or ""
-
         self.origenv = os.environ
-        if self.powercontrol_cmd or self.serialcontrol_cmd:
-            # the external script for controlling power might use ssh
-            # ssh + keys means we need the original user env
-            bborigenv = d.getVar("BB_ORIGENV", False) or {}
-            for key in bborigenv:
-                val = bborigenv.getVar(key)
-                if val is not None:
-                    self.origenv[key] = str(val)
 
-        if self.powercontrol_cmd:
-            if self.powercontrol_args:
-                self.powercontrol_cmd = "%s %s" % (self.powercontrol_cmd, self.powercontrol_args)
-        if self.serialcontrol_cmd:
-            if self.serialcontrol_args:
-                self.serialcontrol_cmd = "%s %s" % (self.serialcontrol_cmd, self.serialcontrol_args)
+        # TEST_POWERCONTROL_CMD is the name of the command that controls the power for a board.
+        # the command should take as the last argument "off" and "on" and "cycle" (off, on)
+        self.powercontrol_cmd = None
+        self.powercontrol_args = None
+        self.serialcontrol_cmd = None
+        self.serialcontrol_args = None
+
+        if 'TEST_POWERCONTROL_CMD' in td:
+            self.powercontrol_cmd = td['TEST_POWERCONTROL_CMD']
+            if 'TEST_POWERCONTROL_EXTRA_ARGS' in td:
+                powercontrol_args = td['TEST_POWERCONTROL_EXTRA_ARGS']
+                self.powercontrol_cmd = "%s %s" % (self.powercontrol_cmd, powercontrol_args)
+
+        if 'TEST_SERIALCONTROL_CMD' in td:
+            self.serialcontrol_cmd = td['TEST_SERIALCONTROL_CMD']
+            if 'TEST_SERIALCONTROL_EXTRA_ARGS' in td:
+                serialcontrol_args = td['TEST_SERIALCONTROL_EXTRA_ARGS']
+                self.serialcontrol_cmd = "%s %s" % (self.serialcontrol_cmd, serialcontrol_args)
 
     def power_ctl(self, msg):
         if self.powercontrol_cmd:
@@ -161,48 +158,8 @@ class MasterImageHardwareTarget(oeqa.targetcontrol.BaseTarget, metaclass=ABCMeta
 
 class SystemdbootTarget(MasterImageHardwareTarget):
 
-    def __init__(self, d):
-        super(SystemdbootTarget, self).__init__(d)
-        # this the value we need to set in the LoaderEntryOneShot EFI variable
-        # so the system boots the 'test' bootloader label and not the default
-        # The first four bytes are EFI bits, and the rest is an utf-16le string
-        # (EFI vars values need to be utf-16)
-        # $ echo -en "test\0" | iconv -f ascii -t utf-16le | hexdump -C
-        # 00000000  74 00 65 00 73 00 74 00  00 00                    |t.e.s.t...|
-        self.efivarvalue = r'\x07\x00\x00\x00\x74\x00\x65\x00\x73\x00\x74\x00\x00\x00'
-        self.deploy_cmds = [
-                'mount -L boot /boot',
-                'mkdir -p /mnt/testrootfs',
-                'mount -L testrootfs /mnt/testrootfs',
-                'modprobe efivarfs',
-                'mount -t efivarfs efivarfs /sys/firmware/efi/efivars',
-                'cp ~/test-kernel /boot',
-                'rm -rf /mnt/testrootfs/*',
-                'tar xvf ~/test-rootfs.%s -C /mnt/testrootfs' % self.image_fstype,
-                'printf "%s" > /sys/firmware/efi/efivars/LoaderEntryOneShot-4a67b082-0a4c-41cf-b6c7-440b29bb8c4f' % self.efivarvalue
-                ]
-
-    def _deploy(self):
-        # make sure these aren't mounted
-        self.master.run("umount /boot; umount /mnt/testrootfs; umount /sys/firmware/efi/efivars;")
-        # from now on, every deploy cmd should return 0
-        # else an exception will be thrown by sshcontrol
-        self.master.ignore_status = False
-        self.master.copy_to(self.rootfs, "~/test-rootfs." + self.image_fstype)
-        self.master.copy_to(self.kernel, "~/test-kernel")
-        for cmd in self.deploy_cmds:
-            self.master.run(cmd)
-
-    def _start(self, params=None):
-        self.power_cycle(self.master)
-        # there are better ways than a timeout but this should work for now
-        time.sleep(120)
-
-
-class SystemdbootTarget(MasterImageHardwareTarget):
-
-    def __init__(self, d):
-        super(SystemdbootTarget, self).__init__(d)
+    def __init__(self, td, logger, **kwargs):
+        super(SystemdbootTarget, self).__init__(td, logger, **kwargs)
         # this the value we need to set in the LoaderEntryOneShot EFI variable
         # so the system boots the 'test' bootloader label and not the default
         # The first four bytes are EFI bits, and the rest is an utf-16le string

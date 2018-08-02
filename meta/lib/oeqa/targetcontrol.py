@@ -22,18 +22,17 @@ class BaseTarget(object, metaclass=ABCMeta):
 
     supported_image_fstypes = []
 
-    def __init__(self, d, logger):
+    def __init__(self, td, logger, **kwargs):
         self.connection = None
         self.ip = None
         self.server_ip = None
-        self.datetime = d.getVar('DATETIME')
-        self.testdir = d.getVar("TEST_LOG_DIR")
-        self.pn = d.getVar("PN")
+        self.datetime = td['DATETIME']
+        self.testdir = td['TEST_LOG_DIR']
+        self.pn = td['PN']
         self.logger = logger
 
     @abstractmethod
     def deploy(self):
-
         self.sshlog = os.path.join(self.testdir, "ssh_target_log.%s" % self.datetime)
         sshloglink = os.path.join(self.testdir, "ssh_target_log")
         if os.path.islink(sshloglink):
@@ -54,17 +53,17 @@ class BaseTarget(object, metaclass=ABCMeta):
         return None
 
     @classmethod
-    def match_image_fstype(self, d, image_fstypes=None):
+    def match_image_fstype(self, td, image_fstypes=None):
         if not image_fstypes:
-            image_fstypes = d.getVar('IMAGE_FSTYPES').split(' ')
+            image_fstypes = td['IMAGE_FSTYPES'].split(' ')
         possible_image_fstypes = [fstype for fstype in self.supported_image_fstypes if fstype in image_fstypes]
         if possible_image_fstypes:
             return possible_image_fstypes[0]
         else:
             return None
 
-    def get_image_fstype(self, d):
-        image_fstype = self.match_image_fstype(d)
+    def get_image_fstype(self, td):
+        image_fstype = self.match_image_fstype(td)
         if image_fstype:
             return image_fstype
         else:
@@ -89,27 +88,31 @@ class QemuTarget(BaseTarget):
 
     supported_image_fstypes = ['ext3', 'ext4', 'cpio.gz', 'wic']
 
-    def __init__(self, d, logger, image_fstype=None):
+    def __init__(self, td, logger, image_fstype=None, **kwargs):
 
         import oe.types
 
-        super(QemuTarget, self).__init__(d, logger)
+        super(QemuTarget, self).__init__(td, logger, **kwargs)
 
         self.rootfs = ''
         self.kernel = ''
         self.image_fstype = ''
 
-        if d.getVar('FIND_ROOTFS') == '1':
-            self.image_fstype = image_fstype or self.get_image_fstype(d)
-            self.rootfs = os.path.join(d.getVar("DEPLOY_DIR_IMAGE"),  d.getVar("IMAGE_LINK_NAME") + '.' + self.image_fstype)
-            self.kernel = os.path.join(d.getVar("DEPLOY_DIR_IMAGE"), d.getVar("KERNEL_IMAGETYPE", False) + '-' + d.getVar('MACHINE', False) + '.bin')
+        if td['FIND_ROOTFS'] == '1':
+            self.image_fstype = image_fstype or self.get_image_fstype(td)
+            self.rootfs = os.path.join(td['DEPLOY_DIR_IMAGE'],  td['IMAGE_LINK_NAME'] + '.' + self.image_fstype)
+            self.kernel = os.path.join(td['DEPLOY_DIR_IMAGE'], td["KERNEL_IMAGETYPE"] + '-' + td['MACHINE'] + '.bin')
         self.qemulog = os.path.join(self.testdir, "qemu_boot_log.%s" % self.datetime)
-        dump_target_cmds = d.getVar("testimage_dump_target")
-        dump_host_cmds = d.getVar("testimage_dump_host")
-        dump_dir = d.getVar("TESTIMAGE_DUMP_DIR")
-        if not dump_dir:
-            dump_dir = os.path.join(d.getVar('LOG_DIR'), 'runtime-hostdump')
-        use_kvm = oe.types.qemu_use_kvm(d.getVar('QEMU_USE_KVM'), d.getVar('TARGET_ARCH'))
+        dump_target_cmds = td['testimage_dump_target']
+        dump_host_cmds = td['testimage_dump_host']
+        dump_dir = td['TESTIMAGE_DUMP_DIR']
+        qemu_use_kvm = td['QEMU_USE_KVM']
+        if qemu_use_kvm and \
+           (oe.types.boolean(qemu_use_kvm) and "x86" in td['MACHINE'] or \
+            td['MACHINE'] in qemu_use_kvm.split()):
+            use_kvm = True
+        else:
+            use_kvm = False
 
         # Log QemuRunner log output to a file
         import oe.path
@@ -120,27 +123,27 @@ class QemuTarget(BaseTarget):
         self.logger.addHandler(loggerhandler)
         oe.path.symlink(os.path.basename(self.qemurunnerlog), os.path.join(self.testdir, 'qemurunner_log'), force=True)
 
-        if d.getVar("DISTRO") == "poky-tiny":
-            self.runner = QemuTinyRunner(machine=d.getVar("MACHINE"),
+        if td['DISTRO'] == "poky-tiny":
+            self.runner = QemuTinyRunner(machine=td['MACHINE'],
                             rootfs=self.rootfs,
-                            tmpdir = d.getVar("TMPDIR"),
-                            deploy_dir_image = d.getVar("DEPLOY_DIR_IMAGE"),
-                            display = d.getVar("BB_ORIGENV", False).getVar("DISPLAY"),
+                            tmpdir = td['TMPDIR'],
+                            deploy_dir_image = td['DEPLOY_DIR_IMAGE'],
+                            display = td['DISPLAY'],
                             logfile = self.qemulog,
                             kernel = self.kernel,
-                            boottime = int(d.getVar("TEST_QEMUBOOT_TIMEOUT")),
+                            boottime = int(td['TEST_QEMUBOOT_TIMEOUT']),
                             logger = logger)
         else:
-            self.runner = QemuRunner(machine=d.getVar("MACHINE"),
+            self.runner = QemuRunner(machine=td['MACHINE'],
                             rootfs=self.rootfs,
-                            tmpdir = d.getVar("TMPDIR"),
-                            deploy_dir_image = d.getVar("DEPLOY_DIR_IMAGE"),
-                            display = d.getVar("BB_ORIGENV", False).getVar("DISPLAY"),
+                            tmpdir = td['TMPDIR'],
+                            deploy_dir_image = td['DEPLOY_DIR_IMAGE'],
+                            display = td['DISPLAY'],
                             logfile = self.qemulog,
-                            boottime = int(d.getVar("TEST_QEMUBOOT_TIMEOUT")),
+                            boottime = int(td['TEST_QEMUBOOT_TIMEOUT']),
                             use_kvm = use_kvm,
                             dump_dir = dump_dir,
-                            dump_host_cmds = d.getVar("testimage_dump_host"),
+                            dump_host_cmds = td['testimage_dump_host'],
                             logger = logger)
 
         self.target_dumper = TargetDumper(dump_target_cmds, dump_dir, self.runner)
@@ -192,37 +195,5 @@ class QemuTarget(BaseTarget):
         else:
             raise bb.build.FuncFailed("%s - FAILED to re-start qemu - check the task log and the boot log" % self.pn)
 
-    def run_serial(self, command, timeout=60):
+    def run_serial(self, command, timeout=5):
         return self.runner.run_serial(command, timeout=timeout)
-
-
-class SimpleRemoteTarget(BaseTarget):
-
-    def __init__(self, d):
-        super(SimpleRemoteTarget, self).__init__(d)
-        addr = d.getVar("TEST_TARGET_IP") or bb.fatal('Please set TEST_TARGET_IP with the IP address of the machine you want to run the tests on.')
-        self.ip = addr.split(":")[0]
-        try:
-            self.port = addr.split(":")[1]
-        except IndexError:
-            self.port = None
-        self.logger.info("Target IP: %s" % self.ip)
-        self.server_ip = d.getVar("TEST_SERVER_IP")
-        if not self.server_ip:
-            try:
-                self.server_ip = subprocess.check_output(['ip', 'route', 'get', self.ip ]).split("\n")[0].split()[-1]
-            except Exception as e:
-                bb.fatal("Failed to determine the host IP address (alternatively you can set TEST_SERVER_IP with the IP address of this machine): %s" % e)
-        self.logger.info("Server IP: %s" % self.server_ip)
-
-    def deploy(self):
-        super(SimpleRemoteTarget, self).deploy()
-
-    def start(self, params=None, ssh=True, extra_bootparams=None):
-        if ssh:
-            self.connection = SSHControl(self.ip, logfile=self.sshlog, port=self.port)
-
-    def stop(self):
-        self.connection = None
-        self.ip = None
-        self.server_ip = None

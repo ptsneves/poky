@@ -11400,7 +11400,7 @@
                             within a separately started QEMU or any
                             other virtual machine manager.
                             </para></listitem>
-                        <listitem><para><emphasis>"Systemd-bootTarget":</emphasis>
+                        <listitem><para><emphasis>"SystemdbootTarget":</emphasis>
                             Choose "Systemd-bootTarget" if your hardware is
                             an EFI-based machine with
                             <filename>systemd-boot</filename> as bootloader and
@@ -11459,10 +11459,10 @@
             </section>
 
             <section id='selecting-systemd-boottarget'>
-                <title>Selecting Systemd-bootTarget</title>
+                <title>Selecting SystemdbootTarget</title>
 
                 <para>
-                    If you did not set <filename>TEST_TARGET</filename> to
+                    If you did not set <filename>TEST_TARG
                     "Systemd-bootTarget", then you do not need any information
                     in this section.
                     You can skip down to the
@@ -11472,7 +11472,7 @@
 
                 <para>
                     If you did set <filename>TEST_TARGET</filename> to
-                    "Systemd-bootTarget", you also need to perform a one-time
+                    "SystemdbootTarget", you also need to perform a one-time
                     setup of your master image by doing the following:
                     <orderedlist>
                         <listitem><para><emphasis>Set <filename>EFI_PROVIDER</filename>:</emphasis>
