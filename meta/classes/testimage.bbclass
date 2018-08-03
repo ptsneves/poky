@@ -264,24 +264,30 @@ def testimage_main(d):
         # Add systemd.log_level=debug to enable systemd debug logging
         bootparams = 'systemd.log_target=console'
 
+
     tc.target.deploy()
-    results = None
-    orig_sigterm_handler = signal.signal(signal.SIGTERM, sigterm_exception)
+
+    #We do not want the runTests to mask exeptions of target.start but we want a failed start
+    #to trigger a stop.
     try:
-        # We need to check if runqemu ends unexpectedly
-        # or if the worker send us a SIGTERM
-        tc.target.start(extra_bootparams=bootparams)
-        results = tc.runTests()
-    except (RuntimeError, BlockingIOError) as err:
-        if isinstance(err, RuntimeError):
-            bb.error('testimage received SIGTERM, shutting down...')
-        else:
-            bb.error('runqemu failed, shutting down...')
-        if results:
-            results.stop()
-            results = None
+        tc.target.start(extra_bootparams=bootparams) 
+        results = None
+        orig_sigterm_handler = signal.signal(signal.SIGTERM, sigterm_exception)
+        try:
+            # We need to check if runqemu ends unexpectedly
+            # or if the worker send us a SIGTERM
+            results = tc.runTests()
+        except (RuntimeError, BlockingIOError) as err:
+            if isinstance(err, RuntimeError):
+                bb.error('testimage received SIGTERM, shutting down...')
+            else:
+                bb.error('runqemu failed, shutting down...')
+            if results:
+                results.stop()
+                results = None
+        finally:
+            signal.signal(signal.SIGTERM, orig_sigterm_handler)
     finally:
-        signal.signal(signal.SIGTERM, orig_sigterm_handler)
         tc.target.stop()
 
     # Show results (if we have them)
