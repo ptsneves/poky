@@ -51,11 +51,7 @@ class MasterImageHardwareTarget(oeqa.targetcontrol.BaseTarget, metaclass=ABCMeta
         self.image_fstype = self.get_image_fstype(td)
         self.rootfs = os.path.join(td['DEPLOY_DIR_IMAGE'], td['IMAGE_LINK_NAME'] + '.' + self.image_fstype)
         self.kernel = os.path.join(td['DEPLOY_DIR_IMAGE'], td["KERNEL_IMAGETYPE"] + '-' + td['MACHINE'] + '.bin')
-        if not os.path.isfile(self.rootfs):
-            # we could've checked that IMAGE_FSTYPES contains tar.gz but the config for running testimage might not be
-            # the same as the config with which the image was build, ie
-            # you bitbake core-image-sato with IMAGE_FSTYPES += "tar.gz"
-            # and your autobuilder overwrites the config, adds the test bits and runs bitbake core-image-sato -c testimage
+        if not os.path.exists(self.rootfs):
             bb.fatal("No rootfs found. Did you build the image ?\n"  \
               "If yes, did you build it with IMAGE_FSTYPES += \"{}\" ?"  \
               "\nExpected path: {}".format(" ".join(self.supported_image_fstypes), self.rootfs))
