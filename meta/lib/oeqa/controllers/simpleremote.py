@@ -1,7 +1,7 @@
-from oeqa.targetcontrol import BaseTarget
 from oeqa.utils.sshcontrol import SSHControl
+from oeqa.controllers.sshtarget import OESSHTarget
 
-class SimpleRemoteTarget(BaseTarget):
+class SimpleRemoteTarget(OESSHTarget):
 
     def __init__(self, td, logger, **kwargs):
         super(SimpleRemoteTarget, self).__init__(td, logger, **kwargs)
@@ -25,7 +25,7 @@ class SimpleRemoteTarget(BaseTarget):
 
     def start(self, params=None, ssh=True, extra_bootparams=None):
         if ssh:
-            self.connection = SSHControl(self.ip, logfile=self.sshlog, port=self.port)
+            self.connection = SSHControl(self.ip, port=self.port)
 
     def stop(self):
         self.connection = None
