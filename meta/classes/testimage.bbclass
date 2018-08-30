@@ -132,6 +132,21 @@ def testimage_sanity(d):
         bb.fatal('When TEST_TARGET is set to "simpleremote" '
                  'TEST_TARGET_IP and TEST_SERVER_IP are needed too.')
 
+# Generated test data json file
+def write_image_test_data(d):
+    from oe.data import export2json
+
+    testdata = "%s/%s.testdata.json" % (d.getVar('DEPLOY_DIR_IMAGE'), d.getVar('IMAGE_NAME'))
+    testdata_link = "%s/%s.testdata.json" % (d.getVar('DEPLOY_DIR_IMAGE'), d.getVar('IMAGE_LINK_NAME'))
+
+    bb.utils.mkdirhier(os.path.dirname(testdata))
+    searchString = "%s/"%(d.getVar("TOPDIR")).replace("//","/")
+    export2json(d, testdata,searchString=searchString,replaceString="")
+    if testdata_link != testdata:
+        if os.path.lexists(testdata_link):
+           os.remove(testdata_link)
+        os.symlink(os.path.basename(testdata), testdata_link)
+
 def testimage_main(d):
     import os
     import json
@@ -165,12 +180,14 @@ def testimage_main(d):
     image_name = ("%s/%s" % (d.getVar('DEPLOY_DIR_IMAGE'),
                              d.getVar('IMAGE_LINK_NAME')))
 
+
+    write_image_test_data(d)
+
     tdname = "%s.testdata.json" % image_name
     try:
         td = json.load(open(tdname, "r"))
     except (FileNotFoundError) as err:
          bb.fatal('File %s Not Found. Have you built the image with INHERIT+="testimage" in the conf/local.conf?' % tdname)
-
     # Some variables need to be updates (mostly paths) with the
     # ones of the current environment because some tests require them.
     updateTestData(d, td, d.getVar('TESTIMAGE_UPDATE_VARS').split())
