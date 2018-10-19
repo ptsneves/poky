@@ -17,7 +17,7 @@ def typed_value(key, d):
     except (TypeError, ValueError) as exc:
         bb.msg.fatal("Data", "%s: %s" % (key, str(exc)))
 
-def export2json(d, json_file, expand=True, searchString="",replaceString=""):
+def export2json(d, json_file, expand=True, searchString="",replaceString="", replaceExceptionKeys=[]):
     data2export = {}
     keys2export = []
 
@@ -31,6 +31,8 @@ def export2json(d, json_file, expand=True, searchString="",replaceString=""):
         elif key.startswith("do_"):
             continue
         elif d.getVarFlag(key, "func"):
+            continue
+        elif key in replaceExceptionKeys:
             continue
 
         keys2export.append(key)
