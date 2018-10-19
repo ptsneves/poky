@@ -140,8 +140,7 @@ def write_image_test_data(d):
     testdata_link = "%s/%s.testdata.json" % (d.getVar('DEPLOY_DIR_IMAGE'), d.getVar('IMAGE_LINK_NAME'))
 
     bb.utils.mkdirhier(os.path.dirname(testdata))
-    searchString = "%s/"%(d.getVar("TOPDIR")).replace("//","/")
-    export2json(d, testdata,searchString=searchString,replaceString="", replaceExceptionKeys=["TOPDIR"])
+    export2json(d, testdata)
     if testdata_link != testdata:
         if os.path.lexists(testdata_link):
            os.remove(testdata_link)
