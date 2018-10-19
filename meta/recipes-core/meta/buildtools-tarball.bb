@@ -15,9 +15,11 @@ TOOLCHAIN_HOST_TASK ?= "\
     nativesdk-ncurses-terminfo-base \
     nativesdk-chrpath \
     nativesdk-gcc \
+    nativesdk-gcov \
     nativesdk-bzip2 \
     nativesdk-bzip2-dev \
     nativesdk-gcc-symlinks \
+    nativesdk-gcov-symlinks \
     nativesdk-g++ \
     nativesdk-g++-symlinks \
     nativesdk-cpp\
