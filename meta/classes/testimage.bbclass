@@ -72,7 +72,7 @@ TEST_SUITES ?= "${DEFAULT_TEST_SUITES}"
 TEST_QEMUBOOT_TIMEOUT ?= "1000"
 TEST_TARGET ?= "OEQemuTarget"
 
-TESTIMAGEDEPENDS = ""
+TESTIMAGEDEPENDS += ""
 TESTIMAGEDEPENDS_qemuall = "qemu-native:do_populate_sysroot qemu-helper-native:do_populate_sysroot qemu-helper-native:do_addto_recipe_sysroot"
 TESTIMAGEDEPENDS += "${@bb.utils.contains('IMAGE_PKGTYPE', 'rpm', 'cpio-native:do_populate_sysroot', '', d)}"
 TESTIMAGEDEPENDS_qemuall += "${@bb.utils.contains('IMAGE_PKGTYPE', 'rpm', 'cpio-native:do_populate_sysroot', '', d)}"
