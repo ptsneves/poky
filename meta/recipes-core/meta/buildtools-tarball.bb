@@ -46,6 +46,7 @@ TOOLCHAIN_HOST_TASK ?= "\
     nativesdk-libstdc++-dev \
     nativesdk-glibc \
     nativesdk-glibc-dev \
+    nativesdk-glibc-staticdev \
     nativesdk-glibc-utils \
     nativesdk-perl-modules \
     nativesdk-bash \
