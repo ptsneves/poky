@@ -7,6 +7,13 @@ EXTRA_OECONF_PATHS = "\
     --with-gxx-include-dir=${includedir}/c++/${BINV} \
 "
 
+EXTRA_OECONF_append_class-nativesdk += "--enable-poison-system-directories"
+EXTRA_OECONF_PATHS_class-nativesdk = "\
+    --with-gxx-include-dir=${includedir}/c++/${BINV} \
+    --with-sysroot=/not/exist \
+    --with-build-sysroot=${STAGING_DIR_TARGET} \
+"
+
 EXTRA_OECONF_append_linuxstdbase = " --enable-clocale=gnu"
 
 # ARMv6+ adds atomic instructions that affect the ABI in libraries built
