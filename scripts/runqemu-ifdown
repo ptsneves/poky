@@ -2,7 +2,7 @@
 #
 # QEMU network configuration script to bring down tap devices. This
 # utility needs to be run as root, and will use the tunctl binary
-# from the native sysroot. 
+# from the native sysroot.
 #
 # If you find yourself calling this script a lot, you can add the
 # the following to your /etc/sudoers file to be able to run this
@@ -27,7 +27,7 @@
 # 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 
 usage() {
-	echo "sudo $(basename $0) <tap-dev> <native-sysroot-basedir>"
+	echo "sudo $(basename $0) <tap-dev> <native-sysroot-basedir> [tap-ip] [target-ip]"
 }
 
 if [ $EUID -ne 0 ]; then
@@ -42,6 +42,9 @@ fi
 
 TAP=$1
 STAGING_BINDIR_NATIVE=$2
+
+HOST_IP=${3-192.168.3.124/32}
+TARGET_IP=${5-192.168.3.72/32}
 
 TUNCTL=$STAGING_BINDIR_NATIVE/tunctl
 if [ ! -e "$TUNCTL" ]; then
@@ -60,7 +63,5 @@ if [ ! -x "$IPTABLES" ]; then
 	echo "$IPTABLES cannot be executed"
 	exit 1
 fi
-n=$[ (`echo $TAP | sed 's/tap//'` * 2) + 1 ]
-dest=$[ (`echo $TAP | sed 's/tap//'` * 2) + 2 ]
-$IPTABLES -D POSTROUTING -t nat -j MASQUERADE -s 192.168.7.$n/32
-$IPTABLES -D POSTROUTING -t nat -j MASQUERADE -s 192.168.7.$dest/32
+$IPTABLES -D POSTROUTING -t nat -j MASQUERADE -s ${HOST_IP}
+$IPTABLES -D POSTROUTING -t nat -j MASQUERADE -s ${TARGET_IP}
