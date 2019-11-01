@@ -252,6 +252,7 @@ def testimage_main(d):
                       'kvm'         : kvm,
                       'slirp'       : slirp,
                       'dump_dir'    : d.getVar("TESTIMAGE_DUMP_DIR"),
+                      'datastore'    : d
                     }
 
     # TODO: Currently BBPATH is needed for custom loading of targets.
