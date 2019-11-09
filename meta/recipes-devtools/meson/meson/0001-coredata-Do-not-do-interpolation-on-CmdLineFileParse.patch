@@ -1,0 +1,24 @@
+From 75ad5e47499c87cc039a1e108693db27cfdacad4 Mon Sep 17 00:00:00 2001
+From: Paulo Neves <ptsneves@gmail.com>
+Date: Sat, 9 Nov 2019 19:05:53 +0100
+Subject: [PATCH] coredata: Do not do interpolation on CmdLineFileParser.
+
+The interpolation will break option from the command line containing
+% signs.
+---
+ mesonbuild/coredata.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/mesonbuild/coredata.py b/mesonbuild/coredata.py
+index 9ee23a6..3ecaa99 100644
+--- a/mesonbuild/coredata.py
++++ b/mesonbuild/coredata.py
+@@ -511,7 +511,7 @@ class CmdLineFileParser(configparser.ConfigParser):
+     def __init__(self):
+         # We don't want ':' as key delimiter, otherwise it would break when
+         # storing subproject options like "subproject:option=value"
+-        super().__init__(delimiters=['='])
++        super().__init__(delimiters=['='], interpolation=None)
+ 
+ def get_cmd_line_file(build_dir):
+     return os.path.join(build_dir, 'meson-private', 'cmd_line.txt')
